@@ -1,0 +1,234 @@
+---
+import { useState } from 'preact/hooks';
+---
+
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExcuseBot</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Grotesk:wght@600&display=swap');
+
+      :root {
+        --primary: #6f3ef4;
+        --primary-hover: #8855f9;
+        --bg-dark: #0d0d0d;
+        --text-light: #f3f3f3;
+        --accent: #9b5cf9;
+        --font: 'Inter', system-ui, sans-serif;
+        --funny: #facc15;
+        --crazy: #f43f5e;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        padding: 3rem 1rem;
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+        font-family: 'Inter', system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        color: var(--accent);
+        letter-spacing: -0.05rem;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        max-width: 500px;
+        background: #1b1b1b;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      }
+
+      input {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 1px solid #333;
+        background: #121212;
+        color: var(--text-light);
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+
+      button {
+        background: var(--primary);
+        color: white;
+        padding: 0.9rem 1.25rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      button:hover {
+        background: var(--primary-hover);
+      }
+
+      .result {
+        margin-top: 2.5rem;
+        text-align: left;
+        max-width: 500px;
+        background: rgba(27, 27, 27, 0.3);
+        backdrop-filter: blur(12px);
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        transition: background 0.3s ease;
+      }
+
+      .result h3 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        color: var(--accent);
+      }
+
+      .result p {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+        font-size: 1rem;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(130deg, #6f3ef4, #121212, #9b5cf9);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        z-index: -1;
+        opacity: 0.15;
+      }
+
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      span.excuse, span.funny_excuse, span.crazy_excuse {
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      span.excuse:hover,
+      span.funny_excuse:hover,
+      span.crazy_excuse:hover {
+        transform: scale(1.03);
+        opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🌀 ExcuseBot</h1>
+    <p style="max-width: 500px; margin-bottom: 2rem; text-align: center; font-size: 1.1rem; color: #cfcfcf;">
+      Need a quick excuse for a sticky situation? Just tell us what it's for and who it's for - ExcuseBot will generate a few excuses for you in seconds.
+    </p>
+    <form id="excuse-form">
+      <input type="text" id="excuse-input-1" placeholder="What do we need an excuse for?" required />
+      <input type="text" id="excuse-input-2" placeholder="Who is this excuse being sent to?" required />
+      <button type="submit">Generate Excuse</button>
+    </form>
+    <div class="result" id="result" style="background: transparent;"></div>
+
+    <script type="module">
+      const form = document.getElementById('excuse-form');
+      const input1 = document.getElementById('excuse-input-1');
+      const input2 = document.getElementById('excuse-input-2');
+      const resultDiv = document.getElementById('result');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const button = form.querySelector('button');
+        if (button.disabled) return; // prevent re-submission during cooldown
+
+        button.disabled = true;
+        button.style.opacity = 0.5;
+        let secondsLeft = 59;
+        button.textContent = `Please wait... (${secondsLeft}s)`;
+
+        const interval = setInterval(() => {
+          secondsLeft--;
+          if (secondsLeft <= 0) {
+            clearInterval(interval);
+          } else {
+            button.textContent = `Please wait... (${secondsLeft}s)`;
+          }
+        }, 999);
+
+        resultDiv.innerHTML = '<p>Generating...</p>';
+
+        try {
+          const res = await fetch('/excuse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: input1.value, recipient: input2.value })
+          });
+
+          const data = await res.json();
+          const excuseObj = Array.isArray(data) ? data[0] : data;
+
+          if (excuseObj?.excuse || excuseObj?.funny_excuse || excuseObj?.crazy_excuse) {
+            resultDiv.style.background = "rgba(27, 27, 27, 0.3)";
+            resultDiv.innerHTML = `
+              <div style="margin-top: 1.5rem;">
+                <h3>Here are your excuses:</h3>
+                <p style="font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1.5rem; color: #aaa;">(Click any excuse to copy it to your clipboard)</p>
+                <p><strong>Excuse:</strong><br> <span class="excuse" style="color: var(--text-light); font-style: italic;">${excuseObj.excuse}</span></p>
+                <p><strong>Funny Excuse:</strong><br> <span class="funny_excuse" style="color: var(--funny); font-style: italic;">${excuseObj.funny_excuse}</span></p>
+                <p><strong>Crazy Excuse:</strong><br> <span class="crazy_excuse" style="color: var(--crazy); font-style: italic;">${excuseObj.crazy_excuse}</span></p>
+              </div>
+            `;
+            // Enable click-to-copy for excuses
+            resultDiv.querySelectorAll('span').forEach(span => {
+              span.style.cursor = 'pointer';
+              span.title = 'Click to copy';
+              span.addEventListener('click', () => {
+                navigator.clipboard.writeText(span.textContent).then(() => {
+                  span.textContent = 'Copied!';
+                  setTimeout(() => {
+                    span.textContent = excuseObj[span.className];
+                  }, 1000);
+                });
+              });
+            });
+          } else {
+            resultDiv.textContent = 'No excuses generated.';
+          }
+
+          setTimeout(() => {
+            button.disabled = false;
+            button.style.opacity = 1;
+            button.textContent = 'Generate Excuse';
+          }, 60000);
+        } catch (err) {
+          resultDiv.textContent = 'Error: ' + err.message;
+        }
+      });
+    </script>
+</body>
+  <footer style="margin-top: 3rem; font-size: 0.9rem; color: #888; text-align: center;">
+    Made with 💜 by Hatem Absi. Probably while procrastinating something important.
+  </footer>
+</html>
