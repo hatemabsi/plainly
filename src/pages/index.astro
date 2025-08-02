@@ -6,7 +6,7 @@ import { useState } from 'preact/hooks';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ExcuseBot</title>
+    <title>Plainly</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Grotesk:wght@600&display=swap');
 
@@ -128,34 +128,32 @@ import { useState } from 'preact/hooks';
         100% { background-position: 0% 50%; }
       }
 
-      span.excuse, span.funny_excuse, span.crazy_excuse {
+      span.grandma, span.teen, span.investor {
         transition: transform 0.15s ease, opacity 0.15s ease;
       }
 
-      span.excuse:hover,
-      span.funny_excuse:hover,
-      span.crazy_excuse:hover {
+      span.grandma:hover,
+      span.teen:hover,
+      span.investor:hover {
         transform: scale(1.03);
         opacity: 0.85;
       }
     </style>
   </head>
   <body>
-    <h1>🌀 ExcuseBot</h1>
+    <h1>📢 Plainly</h1>
     <p style="max-width: 500px; margin-bottom: 2rem; text-align: center; font-size: 1.1rem; color: #cfcfcf;">
-      Need a quick excuse for a sticky situation? Just tell us what it's for and who it's for - ExcuseBot will generate a few excuses for you in seconds.
+      Tired of confusing startup speak? Plainly takes any product statement and rewrites it for a grandma, a TikTok teen, and a busy investor.
     </p>
-    <form id="excuse-form">
-      <input type="text" id="excuse-input-1" placeholder="What do we need an excuse for?" required />
-      <input type="text" id="excuse-input-2" placeholder="Who is this excuse being sent to?" required />
-      <button type="submit">Generate Excuse</button>
+    <form id="plainly-form">
+      <textarea id="plainly-input" placeholder="Paste your product description, press release, or any complex paragraph..." required style="resize: vertical; min-height: 150px; width: 100%; padding: 0.9rem 1rem; border: 1px solid #333; background: #121212; color: var(--text-light); border-radius: 8px; font-size: 1rem;"></textarea>
+      <button type="submit">Explain it to me</button>
     </form>
     <div class="result" id="result" style="background: transparent;"></div>
 
     <script type="module">
-      const form = document.getElementById('excuse-form');
-      const input1 = document.getElementById('excuse-input-1');
-      const input2 = document.getElementById('excuse-input-2');
+      const form = document.getElementById('plainly-form');
+      const input = document.getElementById('plainly-input');
       const resultDiv = document.getElementById('result');
 
       form.addEventListener('submit', async (e) => {
@@ -180,27 +178,27 @@ import { useState } from 'preact/hooks';
         resultDiv.innerHTML = '<p>Generating...</p>';
 
         try {
-          const res = await fetch('/excuse', {
+          const res = await fetch('/plainly', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason: input1.value, recipient: input2.value })
+            body: JSON.stringify({ statement: input.value })
           });
 
           const data = await res.json();
-          const excuseObj = Array.isArray(data) ? data[0] : data;
+          const plainlyObj = Array.isArray(data) ? data[0] : data;
 
-          if (excuseObj?.excuse || excuseObj?.funny_excuse || excuseObj?.crazy_excuse) {
+          if (plainlyObj?.grandma || plainlyObj?.teen || plainlyObj?.investor) {
             resultDiv.style.background = "rgba(27, 27, 27, 0.3)";
             resultDiv.innerHTML = `
               <div style="margin-top: 1.5rem;">
-                <h3>Here are your excuses:</h3>
-                <p style="font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1.5rem; color: #aaa;">(Click any excuse to copy it to your clipboard)</p>
-                <p><strong>Excuse:</strong><br> <span class="excuse" style="color: var(--text-light); font-style: italic;">${excuseObj.excuse}</span></p>
-                <p><strong>Funny Excuse:</strong><br> <span class="funny_excuse" style="color: var(--funny); font-style: italic;">${excuseObj.funny_excuse}</span></p>
-                <p><strong>Crazy Excuse:</strong><br> <span class="crazy_excuse" style="color: var(--crazy); font-style: italic;">${excuseObj.crazy_excuse}</span></p>
+                <h3>Here are your explanations:</h3>
+                <p style="font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1.5rem; color: #aaa;">(Click any explanation to copy it to your clipboard)</p>
+                <p><strong>For Grandma:</strong><br> <span class="grandma" style="color: var(--text-light); font-style: italic;">${plainlyObj.grandma}</span></p>
+                <p><strong>For Teens:</strong><br> <span class="teen" style="color: var(--funny); font-style: italic;">${plainlyObj.teen}</span></p>
+                <p><strong>For Investor:</strong><br> <span class="investor" style="color: var(--crazy); font-style: italic;">${plainlyObj.investor}</span></p>
               </div>
             `;
-            // Enable click-to-copy for excuses
+            // Enable click-to-copy for plainlys
             resultDiv.querySelectorAll('span').forEach(span => {
               span.style.cursor = 'pointer';
               span.title = 'Click to copy';
@@ -208,19 +206,19 @@ import { useState } from 'preact/hooks';
                 navigator.clipboard.writeText(span.textContent).then(() => {
                   span.textContent = 'Copied!';
                   setTimeout(() => {
-                    span.textContent = excuseObj[span.className];
+                    span.textContent = plainlyObj[span.className];
                   }, 1000);
                 });
               });
             });
           } else {
-            resultDiv.textContent = 'No excuses generated.';
+            resultDiv.textContent = 'No explanations generated.';
           }
 
           setTimeout(() => {
             button.disabled = false;
             button.style.opacity = 1;
-            button.textContent = 'Generate Excuse';
+            button.textContent = 'Explain it to me';
           }, 60000);
         } catch (err) {
           resultDiv.textContent = 'Error: ' + err.message;
@@ -229,6 +227,6 @@ import { useState } from 'preact/hooks';
     </script>
 </body>
   <footer style="margin-top: 3rem; font-size: 0.9rem; color: #888; text-align: center;">
-    Made with 💜 by Hatem Absi. Probably while procrastinating something important.
+    Built by Hatem Absi. Because startup buzzwords needed a translator.
   </footer>
 </html>

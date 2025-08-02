@@ -15,7 +15,7 @@ export async function POST({ request }: APIContext) {
   const password = import.meta.env.N8N_PASSWORD;
   const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
 
-  const response = await fetch('https://hatemabsi.app.n8n.cloud/webhook/excusebot', {
+  const response = await fetch('https://hatemabsi.app.n8n.cloud/webhook/plainly', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
